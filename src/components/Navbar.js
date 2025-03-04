@@ -28,7 +28,6 @@ function Navbar() {
               <Button color="inherit" component={Link} to="/home">Home</Button>
               <Button color="inherit" component={Link} to="/user">Profile</Button>
               <Button color="inherit" component={Link} to="/albums">Albums</Button>
-              <Button color="inherit" component={Link} to="/photos">Photos</Button>
               <Button color="inherit" onClick={handleLogout}>Logout</Button>
             </>
           ) : (

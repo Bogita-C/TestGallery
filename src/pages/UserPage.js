@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Container, Typography, Paper, Box, CircularProgress } from '@mui/material';
-import axios from 'axios';
+import { findUserByEmail } from '../utils/userUtils';
 
 function UserPage() {
   const { currentUser } = useAuth();
@@ -12,9 +12,12 @@ function UserPage() {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        // For demo purposes, we'll fetch the first user
-        const response = await axios.get('https://jsonplaceholder.typicode.com/users/1');
-        setUserData(response.data);
+        const user = await findUserByEmail(currentUser.email);
+        if (user) {
+          setUserData(user);
+        } else {
+          setError('User data not found');
+        }
         setLoading(false);
       } catch (err) {
         setError('Failed to fetch user data');
@@ -22,8 +25,10 @@ function UserPage() {
       }
     };
 
-    fetchUserData();
-  }, []);
+    if (currentUser?.email) {
+      fetchUserData();
+    }
+  }, [currentUser]);
 
   if (loading) {
     return (
@@ -49,13 +54,14 @@ function UserPage() {
             User Profile
           </Typography>
           <Typography variant="body1" gutterBottom>
-            Email: {currentUser?.email}
+            Firebase Email: {currentUser?.email}
           </Typography>
           {userData && (
             <>
               <Typography variant="h6" sx={{ mt: 2 }}>Profile Information:</Typography>
               <Typography>Name: {userData.name}</Typography>
               <Typography>Username: {userData.username}</Typography>
+              <Typography>Email: {userData.email}</Typography>
               <Typography>Phone: {userData.phone}</Typography>
               <Typography>Website: {userData.website}</Typography>
               <Typography variant="h6" sx={{ mt: 2 }}>Address:</Typography>

@@ -37,7 +37,7 @@ function App() {
               <AlbumPage />
             </PrivateRoute>
           } />
-          <Route path="/photos" element={
+          <Route path="/photos/:albumId" element={
             <PrivateRoute>
               <PhotoPage />
             </PrivateRoute>
