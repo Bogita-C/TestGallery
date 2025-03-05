@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   Container,
   Typography,
@@ -10,13 +10,17 @@ import {
   CardContent,
   CardMedia,
   CircularProgress,
-  IconButton
+  IconButton,
+  Button,
+  Alert
 } from '@mui/material';
 import ClearIcon from '@mui/icons-material/Clear';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import axios from 'axios';
 
 function PhotoPage() {
   const { albumId } = useParams();
+  const navigate = useNavigate();
   const [photos, setPhotos] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
@@ -26,14 +30,13 @@ function PhotoPage() {
   useEffect(() => {
     const fetchPhotosAndAlbum = async () => {
       try {
-        // Fetch album details
+        // Fetch album details first
         const albumResponse = await axios.get(`https://jsonplaceholder.typicode.com/albums/${albumId}`);
         setAlbumTitle(albumResponse.data.title);
 
-        // Fetch photos for this album
-        const photosResponse = await axios.get('https://jsonplaceholder.typicode.com/photos');
-        const albumPhotos = photosResponse.data.filter(photo => photo.albumId === parseInt(albumId));
-        setPhotos(albumPhotos);
+        // Then fetch photos for this specific album
+        const photosResponse = await axios.get(`https://jsonplaceholder.typicode.com/photos?albumId=${albumId}`);
+        setPhotos(photosResponse.data);
         setLoading(false);
       } catch (err) {
         setError('Failed to fetch photos');
@@ -50,6 +53,10 @@ function PhotoPage() {
     setSearchTerm('');
   };
 
+  const handleBackToAlbums = () => {
+    navigate('/albums');
+  };
+
   const filteredPhotos = photos.filter(photo =>
     photo.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -62,63 +69,68 @@ function PhotoPage() {
     );
   }
 
-  if (error) {
-    return (
-      <Container>
-        <Typography color="error">{error}</Typography>
-      </Container>
-    );
-  }
-
   return (
     <Container maxWidth="lg">
       <Box sx={{ mt: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          {albumTitle}
-        </Typography>
-        <Box sx={{ position: 'relative', mb: 4 }}>
-          <TextField
-            fullWidth
-            label="Search Photos"
-            variant="outlined"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            InputProps={{
-              endAdornment: searchTerm && (
-                <IconButton
-                  aria-label="clear search"
-                  onClick={handleClearSearch}
-                  edge="end"
-                >
-                  <ClearIcon />
-                </IconButton>
-              ),
-            }}
-          />
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+          <Button 
+            startIcon={<ArrowBackIcon />} 
+            onClick={handleBackToAlbums}
+            sx={{ mr: 2 }}
+          >
+            Back to Albums
+          </Button>
+          <Typography variant="h4" component="h1">
+            {albumTitle}
+          </Typography>
         </Box>
-        <Grid container spacing={3}>
-          {filteredPhotos.map(photo => (
-            <Grid item xs={12} sm={6} md={4} lg={3} key={photo.id}>
-              <Card>
-                <CardMedia
-                  component="img"
-                  height="200"
-                  image={photo.url}
-                  alt={photo.title}
-                  sx={{ objectFit: 'cover' }}
-                />
-                <CardContent>
-                  <Typography variant="body2" noWrap>
-                    {photo.title}
-                  </Typography>
-                  <Typography variant="caption" color="textSecondary">
-                    Album ID: {photo.albumId}
-                  </Typography>
-                </CardContent>
-              </Card>
+
+        {error ? (
+          <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>
+        ) : (
+          <>
+            <Box sx={{ position: 'relative', mb: 4 }}>
+              <TextField
+                fullWidth
+                label="Search Photos"
+                variant="outlined"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                InputProps={{
+                  endAdornment: searchTerm && (
+                    <IconButton
+                      aria-label="clear search"
+                      onClick={handleClearSearch}
+                      edge="end"
+                    >
+                      <ClearIcon />
+                    </IconButton>
+                  ),
+                }}
+              />
+            </Box>
+
+            <Grid container spacing={3}>
+              {filteredPhotos.length === 0 ? (
+                <Box sx={{ width: '100%', mt: 2 }}>
+                  <Alert severity="info">No photos found matching your search.</Alert>
+                </Box>
+              ) : (
+                filteredPhotos.map(photo => (
+                  <Grid item xs={12} sm={6} md={4} lg={3} key={photo.id}>
+                    <Card>
+                      <CardContent>
+                        <Typography variant="body2" noWrap>
+                          {photo.title}
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                ))
+              )}
             </Grid>
-          ))}
-        </Grid>
+          </>
+        )}
       </Box>
     </Container>
   );
